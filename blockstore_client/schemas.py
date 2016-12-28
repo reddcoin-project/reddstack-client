@@ -23,7 +23,7 @@
 
 import types
 import re
-from pybitcoin.formatcheck import is_b58check_address
+from pyreddcoin.formatcheck import is_b58check_address
 
 class SchemaField( object ):
    

@@ -326,7 +326,7 @@ if __name__ == "__main__":
    Unit tests.
    """
    
-   import pybitcoin 
+   import pyreddcoin 
    import json 
    
    # hack around absolute paths
@@ -348,7 +348,7 @@ if __name__ == "__main__":
    ]
    
    def hash_data( d ):
-      return pybitcoin.hash.hex_hash160( d )
+      return pyreddcoin.hash.hex_hash160( d )
    
    rc = storage_init()
    if not rc:

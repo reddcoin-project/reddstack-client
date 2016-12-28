@@ -39,7 +39,7 @@ from protocoin.serializers import *
 from protocoin.fields import *
 
 import virtualchain
-import pybitcoin
+import pyreddcoin
 import bitcoin
 
 BLOCK_HEADER_SIZE = 81
@@ -445,7 +445,7 @@ class SPVClient(object):
         Calculate the hash of a transction
         """
         tx_hex = virtualchain.tx_to_hex( tx )
-        tx_hash = pybitcoin.bin_double_sha256(tx_hex.decode('hex'))[::-1].encode('hex')
+        tx_hash = pyreddcoin.bin_double_sha256(tx_hex.decode('hex'))[::-1].encode('hex')
         return tx_hash
 
 

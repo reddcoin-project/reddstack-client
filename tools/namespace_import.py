@@ -28,7 +28,7 @@ import sys
 import traceback
 import subprocess
 import pprint
-import pybitcoin
+import pyreddcoin
 import binascii
 import logging 
 import requests
@@ -61,7 +61,7 @@ def send_checkpoint( chaincom_client, privkey_str, checkpoint_str="http://blocks
     """
     
     nulldata = binascii.hexlify( checkpoint_str )
-    return pybitcoin.embed_data_in_blockchain( nulldata, privkey_str, chaincom_client, 10000, format='hex')
+    return pyreddcoin.embed_data_in_blockchain( nulldata, privkey_str, chaincom_client, 10000, format='hex')
 
 
 def namecoin_to_bitcoin_address( nmc_address ):
@@ -70,7 +70,7 @@ def namecoin_to_bitcoin_address( nmc_address ):
     The only difference is the version number.
     """
     
-    return pybitcoin.b58check_encode( pybitcoin.b58check_decode( nmc_address ), version_byte=0 )
+    return pyreddcoin.b58check_encode( pyreddcoin.b58check_decode( nmc_address ), version_byte=0 )
 
 
 def get_chaincom_api_keys( path="./chaincom.ini" ):
@@ -198,7 +198,7 @@ if __name__ == "__main__":
         print >> sys.stderr, "Failed to get Chain.com API keys"
         sys.exit(1)
         
-    chaincom_client = pybitcoin.ChainComClient( chaincom_id, chaincom_secret )
+    chaincom_client = pyreddcoin.ChainComClient( chaincom_id, chaincom_secret )
 
     # get our namespace's names
     try:
@@ -233,7 +233,7 @@ if __name__ == "__main__":
             tmp2 = [k.strip() for k in tmp]
             
             for pk in tmp2:
-                addr = pybitcoin.BitcoinPrivateKey( pk ).public_key().address()
+                addr = pyreddcoin.ReddcoinPrivateKey( pk ).public_key().address()
                 balance = get_balance( chaincom_id, chaincom_secret, addr )
                 print "%s (%s) balance: %s" % (pk, addr, balance)
                 
@@ -248,7 +248,7 @@ if __name__ == "__main__":
             pass
         
     if len(keyring) == 0:
-        pk = pybitcoin.BitcoinPrivateKey( privkey_str )
+        pk = pyreddcoin.ReddcoinPrivateKey( privkey_str )
         keyring_generator = keychain.PrivateKeychain.from_private_key( privkey_str )
         
         keyring = [ pk.to_hex() ]
@@ -257,9 +257,9 @@ if __name__ == "__main__":
         for i in xrange(0, 300):
             
             pk_hex = keyring_generator.child(i).private_key()
-            pk_wif = pybitcoin.BitcoinPrivateKey( pk_hex ).to_wif()
+            pk_wif = pyreddcoin.ReddcoinPrivateKey( pk_hex ).to_wif()
             
-            pk_addr = pybitcoin.BitcoinPrivateKey( pk_hex ).public_key().address()
+            pk_addr = pyreddcoin.ReddcoinPrivateKey( pk_hex ).public_key().address()
             balance = get_balance( chaincom_id, chaincom_secret, pk_addr )
             
             print "%s (%s) balance: %s" % (pk_wif, pk_addr, balance)
@@ -436,7 +436,7 @@ if __name__ == "__main__":
                 
                 for pk_str in keyring:
                     
-                    addr = pybitcoin.BitcoinPrivateKey( pk_str ).public_key().address()
+                    addr = pyreddcoin.ReddcoinPrivateKey( pk_str ).public_key().address()
                     total_unconfirmed += get_num_unconfirmed_txs( chaincom_id, chaincom_secret, addr )
                     
                 num_unconfirmed_txs = total_unconfirmed
@@ -497,7 +497,7 @@ if __name__ == "__main__":
         while count < MAX_COUNT:
  
            pk_str = keyring[ key_rr % len(keyring) ]
-           pub_str = pybitcoin.BitcoinPrivateKey( pk_str ).public_key().address()
+           pub_str = pyreddcoin.ReddcoinPrivateKey( pk_str ).public_key().address()
            key_rr += 1
            
            existing_name = client.lookup( fqn )

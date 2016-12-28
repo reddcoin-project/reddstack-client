@@ -33,7 +33,7 @@ sys.path.insert(0, current_dir)
 from parsing import json_stable_serialize
 import schemas
 
-import pybitcoin
+import pyreddcoin
 import bitcoin as pybitcointools
 import types
 import re
@@ -74,7 +74,7 @@ def get_data_hash( data_text ):
    Generate a hash over data for immutable storage.
    Return the hex string.
    """
-   return pybitcoin.hash.hex_hash160( data_text )
+   return pyreddcoin.hash.hex_hash160( data_text )
 
 
 def make_mutable_urls( data_id ):
@@ -308,7 +308,6 @@ def get_immutable_data( data_key ):
       data = None
 
       try:
-
          data = handler.get_immutable_handler( data_key )
       except Exception, e:
          log.exception( e )
