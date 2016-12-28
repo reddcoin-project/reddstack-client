@@ -304,8 +304,8 @@ def get_config(path=CONFIG_PATH):
             except:
                 log.error("Invalid 'port=' setting.  Please use an integer")
 
-        if parser.has_option("blockstore-client", "storage"):
-            config['storage_drivers'] = parser.get("blockstore-client", "storage")
+        if parser.has_option("blockstore-client", "storage_drivers"):
+            config['storage_drivers'] = parser.get("blockstore-client", "storage_drivers")
 
         if parser.has_option("blockstore-client", "metadata"):
             config['metadata'] = parser.get("blockstore-client", "metadata")
