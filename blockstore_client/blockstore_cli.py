@@ -26,7 +26,7 @@ import sys
 import json
 import traceback
 import os
-import pybitcoin
+import pyreddcoin
 
 # Hack around absolute paths
 current_dir = os.path.abspath(os.path.dirname(__file__))
@@ -60,7 +60,7 @@ def get_sorted_commands(display_commands=False):
                     'update_tx', 'update_subsidized',
                     'transfer_tx', 'transfer_subsidized',
                     'revoke_tx', 'revoke_subsidized',
-                    'renew_tx', 'renew_subsidized']
+                    'renew_tx', 'renew_subsidized', 'tx_status']
 
     if display_commands:
         for cmd in sorted(command_list):
@@ -243,6 +243,15 @@ def run_cli():
     subparser = subparsers.add_parser(
       'status',
       help='get basic information from the blockstored server')
+
+    if advanced_mode == "on":
+      # ------------------------------------
+      subparser = subparsers.add_parser(
+        'tx_status',
+        help='<tx_id> | get the status of a particular transaction')
+      subparser.add_argument(
+        'tx_id', type=str,
+        help='the tx id to query')
 
     if advanced_mode == "on":
       # ------------------------------------
@@ -659,7 +668,7 @@ def run_cli():
       'txid', type=str, nargs='?',
       help='[OPTIONAL] the transaction ID of the previously-attempted, partially-successful update')
 
-    if advanced_mode == 'true':
+    if advanced_mode == 'on':
       # ------------------------------------
       subparser = subparsers.add_parser(
         'update_tx',
@@ -777,6 +786,10 @@ def run_cli():
 
     elif args.action == 'ping':
         result = client.ping()
+
+    elif args.action == 'tx_status':
+
+        result = client.gettxinfo(str(args.tx_id))
 
     elif args.action == 'preorder':
 
