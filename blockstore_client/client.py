@@ -38,7 +38,7 @@ import parsing, schemas, storage, drivers, config, spv, utils
 import user as user_db
 from spv import SPVClient
 
-import pybitcoin
+import pyreddcoin
 import bitcoin
 import binascii
 from utilitybelt import is_hex
@@ -179,9 +179,10 @@ class BlockstoreRPCClient(object):
         # parse the response
         try:
             result = json.loads(response)
-
             # Netstrings responds with [{}] instead of {}
-            result = result[0]
+            #result = result[0]
+            result = result['result'][0]
+            print("Result back: %s" % result)
         except Exception, e:
 
             # try to clean up
@@ -590,7 +591,7 @@ def parse_tx_op_return(tx):
     op_return = None
     outputs = tx['vout']
     for out in outputs:
-        if int(out["scriptPubKey"]['hex'][0:2], 16) == pybitcoin.opcodes.OP_RETURN:
+        if int(out["scriptPubKey"]['hex'][0:2], 16) == pyreddcoin.opcodes.OP_RETURN:
             op_return = out['scriptPubKey']['hex'].decode('hex')
             break
 
@@ -674,7 +675,7 @@ def verify_consensus_hash_from_tx(tx, fqname, candidate_consensus_hash):
     else:
         # In NAME_UPDATE, the consensus hash *at the time of the operation* is mixed with the name,
         # truncated to 16 bytes, and appended after the opcode.
-        name_consensus_hash_mix = pybitcoin.hash.bin_sha256(fqname + candidate_consensus_hash)[0:16]
+        name_consensus_hash_mix = pyreddcoin.hash.bin_sha256(fqname + candidate_consensus_hash)[0:16]
         tx_name_consensus_hash_mix = payload[0:16]
 
         if name_consensus_hash_mix == tx_name_consensus_hash_mix:
@@ -1131,6 +1132,29 @@ def getinfo(proxy=None):
 
     try:
         resp = proxy.getinfo()
+        if type(resp) == list:
+            if len(resp) == 0:
+                resp = {'error': 'No data returned'}
+            else:
+                resp = resp[0]
+
+    except Exception as e:
+        resp = json_traceback()
+
+    return resp
+
+def gettxinfo(tx_id, proxy=None):
+    """
+    gettxinfo
+    """
+
+    resp = {}
+
+    if proxy is None:
+        proxy = get_default_proxy()
+
+    try:
+        resp = proxy.gettxinfo(tx_id)
         if type(resp) == list:
             if len(resp) == 0:
                 resp = {'error': 'No data returned'}
@@ -1626,7 +1650,7 @@ def preorder(name, privatekey, register_addr=None, proxy=None, tx_only=False):
     register_privkey_wif = None
 
     if register_addr is None:
-        privkey = pybitcoin.BitcoinPrivateKey()
+        privkey = pyreddcoin.ReddcoinPrivateKey()
         pubkey = privkey.public_key()
 
         register_addr = pubkey.address()
@@ -1636,7 +1660,7 @@ def preorder(name, privatekey, register_addr=None, proxy=None, tx_only=False):
         print register_addr
 
     # make sure the reveal address is *not* the address of this private key
-    privkey = pybitcoin.BitcoinPrivateKey(privatekey)
+    privkey = pyreddcoin.ReddcoinPrivateKey(privatekey)
     if register_addr == privkey.public_key().address():
         return {"error": "Register address derived from private key"}
 
@@ -1765,7 +1789,7 @@ def update(name, user_json_or_hash, privatekey, txid=None, proxy=None, tx_only=F
         if user_data is None:
             return {'error': 'Invalid user record JSON'}
 
-        user_record_hash = pybitcoin.hash.hex_hash160(user_db.serialize_user(user_data))
+        user_record_hash = pyreddcoin.hash.hex_hash160(user_db.serialize_user(user_data))
 
     # go get the current user record (blockchain only)
     current_user_record = get_name_record(name, check_only_blockchain=True)
@@ -1778,7 +1802,7 @@ def update(name, user_json_or_hash, privatekey, txid=None, proxy=None, tx_only=F
 
     result = {}
 
-    old_hash = pybitcoin.hash.hex_hash160(user_db.serialize_user(user_data))
+    old_hash = pyreddcoin.hash.hex_hash160(user_db.serialize_user(user_data))
 
     # only want transaction?
     if tx_only:
@@ -1953,7 +1977,7 @@ def namespace_preorder(namespace_id, privatekey, reveal_addr=None, proxy=None):
     reveal_privkey_wif = None
 
     if reveal_addr is None:
-        privkey = pybitcoin.BitcoinPrivateKey()
+        privkey = pyreddcoin.ReddcoinPrivateKey()
         pubkey = privkey.public_key()
         reveal_addr = pubkey.address()
 
@@ -1962,7 +1986,7 @@ def namespace_preorder(namespace_id, privatekey, reveal_addr=None, proxy=None):
         print reveal_addr
 
     # make sure the reveal address is *not* the address of this private key
-    privkey = pybitcoin.BitcoinPrivateKey(privatekey)
+    privkey = pyreddcoin.ReddcoinPrivateKey(privatekey)
     if reveal_addr == privkey.public_key().address():
         return {"error": "Reveal address derived from private key"}
 
