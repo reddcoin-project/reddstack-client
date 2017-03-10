@@ -182,7 +182,7 @@ class BlockstoreRPCClient(object):
             # Netstrings responds with [{}] instead of {}
             #result = result[0]
             result = result['result'][0]
-            print("Result back: %s" % result)
+            #print("Result back: %s" % json.dumps(result))
         except Exception, e:
 
             # try to clean up
@@ -1828,17 +1828,17 @@ def update(name, user_json_or_hash, privatekey, txid=None, proxy=None, tx_only=F
             # failed
             return result
 
-        if 'transaction_hash' not in result:
+        if 'tx_hash' not in result:
             # failed
             result['error'] = "No transaction hash given"
             return result
 
-        txid = result['transaction_hash']
+        txid = result['tx_hash']
 
     else:
 
         # embed the txid into the result nevertheless
-        result['transaction_hash'] = txid
+        result['tx_hash'] = txid
 
     # store new user data
     rc = True
@@ -1856,7 +1856,7 @@ def update(name, user_json_or_hash, privatekey, txid=None, proxy=None, tx_only=F
 
     result['status'] = True
     result['value_hash'] = new_data_hash
-    result['transaction_hash'] = txid
+    result['tx_hash'] = txid
 
     return result
 
