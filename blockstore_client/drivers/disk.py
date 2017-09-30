@@ -28,7 +28,8 @@ import os
 import sys 
 import traceback
 
-DISK_ROOT="/tmp/blockstore-disk"
+#DISK_ROOT="/tmp/blockstore-disk"
+DISK_ROOT="/var/blockstore-disk"
 IMMUTABLE_STORAGE_ROOT = DISK_ROOT + "/immutable"
 MUTABLE_STORAGE_ROOT = DISK_ROOT + "/mutable"
 
