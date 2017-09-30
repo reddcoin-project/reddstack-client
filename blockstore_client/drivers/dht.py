@@ -27,7 +27,7 @@ import traceback
 
 import types
 import re
-import pybitcoin
+import pyreddcoin
 import socket
 from basicrpc import Proxy
 
@@ -72,7 +72,7 @@ def dht_data_hash(data):
     """
     Calculate a key from the data.
     """
-    return pybitcoin.hash.hex_hash160(data)
+    return pyreddcoin.hash.hex_hash160(data)
 
 
 def dht_init(local_server=False):
@@ -150,7 +150,7 @@ def make_mutable_url(data_id):
 
     Return a string.
     """
-    return "dht:" + pybitcoin.hash.hex_hash160(data_id)
+    return "dht:" + pyreddcoin.hash.hex_hash160(data_id)
 
 
 def get_immutable_handler(key):
@@ -253,7 +253,7 @@ if __name__ == "__main__":
     Unit tests.
     """
 
-    import pybitcoin
+    import pyreddcoin
     import json
 
     # hack around absolute paths
@@ -274,7 +274,7 @@ if __name__ == "__main__":
     ]
 
     def hash_data(d):
-        return pybitcoin.hash.hex_hash160(d)
+        return pyreddcoin.hash.hex_hash160(d)
 
     rc = storage_init()
     if not rc:
