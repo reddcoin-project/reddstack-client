@@ -8,7 +8,7 @@ exec(open('blockstore_client/version.py').read())
 setup(
     name='blockstore-client',
     version=__version__,
-    url='https://github.com/blockstack/blockstore-client',
+    url='https://github.com/reddcoin-project/blockstore-client',
     license='GPLv3',
     author='Blockstack.org',
     author_email='support@blockstack.org',
@@ -16,7 +16,7 @@ setup(
     keywords='blockchain bitcoin btc cryptocurrency name key value store data',
     packages=find_packages(),
     scripts=['bin/blockstore-cli', 'bin/blockstore'],
-    download_url='https://github.com/blockstack/blockstore-client/archive/master.zip',
+    download_url='https://github.com/reddcoin-project/blockstore-client/archive/master.zip',
     zip_safe=False,
     include_package_data=True,
     install_requires=[
