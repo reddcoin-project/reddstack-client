@@ -967,8 +967,7 @@ def run_cli():
     elif args.action == 'put_immutable':
         result = client.put_immutable(str(args.name),
                                       str(args.data),
-                                      str(args.privatekey),
-                                      conf=conf)
+                                      str(args.privatekey))
 
     elif args.action == 'get_mutable':
         result = client.get_mutable(str(args.name), str(args.data_id), conf=conf)
