@@ -184,8 +184,8 @@ OPFIELDS = {
 DEBUG = True
 MAX_RPC_LEN = 1024 * 1024 * 1024
 
-CONFIG_DIR = os.path.expanduser("~/.blockstore-client")
-CONFIG_PATH = os.path.join(CONFIG_DIR, "blockstore-client.ini")
+CONFIG_DIR = os.path.expanduser("~/.reddstore-client")
+CONFIG_PATH = os.path.join(CONFIG_DIR, "reddstore-client.ini")
 SPV_HEADERS_PATH = os.path.join(CONFIG_DIR, "blockchain-headers.dat")
 
 BLOCKCHAIN_ID_MAGIC = 'id'
