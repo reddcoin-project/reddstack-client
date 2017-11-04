@@ -34,13 +34,14 @@ DEBUG = True
 VERSION = __version__
 
 DEFAULT_BLOCKSTORED_PORT = '6264'
-DEFAULT_BLOCKSTORED_SERVER = "blockstore.blockstack.org"
+DEFAULT_BLOCKSTORED_SERVER = "localhost"
+# DEFAULT_BLOCKSTORED_SERVER = "reddid01.reddcoin.com"
 
 # initialize to default settings
 BLOCKSTORED_SERVER = DEFAULT_BLOCKSTORED_SERVER
 BLOCKSTORED_PORT = DEFAULT_BLOCKSTORED_PORT
 
-BLOCKSTORE_METADATA_DIR = os.path.expanduser("~/.blockstore-client/metadata")
+BLOCKSTORE_METADATA_DIR = os.path.expanduser("~/.reddstore-client/metadata")
 BLOCKSTORE_DEFAULT_STORAGE_DRIVERS = "disk"
 
 DEFAULT_TIMEOUT = 10  # in secs
@@ -322,7 +323,7 @@ def get_config(path=CONFIG_PATH):
     #config.update(bitcoind_config)
 
     if not os.path.isdir(config['metadata']):
-        if config['metadata'].startswith(os.path.expanduser("~/.blockstore-client")):
+        if config['metadata'].startswith(os.path.expanduser("~/.reddstore-client")):
             try:
                 os.makedirs(config['metadata'])
             except:
