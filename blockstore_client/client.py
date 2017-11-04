@@ -39,7 +39,7 @@ import user as user_db
 from spv import SPVClient
 
 import pyreddcoin
-import bitcoin
+import pyreddcointools
 import binascii
 from utilitybelt import is_hex
 
@@ -2373,7 +2373,7 @@ def put_mutable(name, data_id, data_text, privatekey, proxy=None, create=True,
         if len(urls) == 0:
             return {"error": "No routes constructed"}
 
-        writer_pubkey = bitcoin.privkey_to_pubkey(privatekey)
+        writer_pubkey = pyreddcointools.privkey_to_pubkey(privatekey)
 
         route = storage.mutable_data_route(data_id, urls,
                                            writer_pubkey=writer_pubkey)

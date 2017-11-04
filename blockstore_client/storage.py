@@ -34,7 +34,7 @@ from parsing import json_stable_serialize
 import schemas
 
 import pyreddcoin
-import bitcoin as pybitcointools
+import pyreddcointools
 import types
 import re
 import base64
@@ -396,8 +396,8 @@ def sign_raw_data( raw_data, privatekey ):
    """
    data_hash = get_data_hash( raw_data )
 
-   data_sig_bin = pybitcointools.ecdsa_raw_sign( data_hash, privatekey )
-   return pybitcointools.encode_sig( data_sig_bin[0], data_sig_bin[1], data_sig_bin[2] )
+   data_sig_bin = pyreddcointools.ecdsa_raw_sign( data_hash, privatekey )
+   return pyreddcointools.encode_sig( data_sig_bin[0], data_sig_bin[1], data_sig_bin[2] )
 
 
 def verify_raw_data( raw_data, pubkey, sigb64 ):
@@ -410,7 +410,7 @@ def verify_raw_data( raw_data, pubkey, sigb64 ):
 
    data_hash = get_data_hash( raw_data )
 
-   return pybitcointools.ecdsa_raw_verify( data_hash, pybitcointools.decode_sig( sigb64 ), pubkey )
+   return pyreddcointools.ecdsa_raw_verify( data_hash, pyreddcointools.decode_sig( sigb64 ), pubkey )
 
 
 def sign_mutable_data( data, privatekey ):
