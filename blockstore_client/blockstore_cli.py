@@ -914,7 +914,7 @@ def run_cli():
         result = client.register_subsidized(str(args.name), str(args.privatekey), str(args.addr), str(args.subsidy_key) )
 
     elif args.action == 'register_unsigned':
-        result = client.register_unsigned(str(args.name), str(args.privatekey), str(args.addr) )
+        result = client.register_unsigned(str(args.name), str(args.public_key), str(args.addr) )
 
     elif args.action == 'update':
 
