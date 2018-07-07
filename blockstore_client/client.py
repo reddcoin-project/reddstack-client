@@ -1912,7 +1912,12 @@ def update_unsigned(name, user_json_or_hash, public_key, txid=None):
     """
     update_unsigned
     """
-    return update(name, user_json_or_hash, None, txid=txid, public_key=public_key, tx_only=True)
+    tx_only = False
+
+    if txid=None:
+        tx_only = True
+
+    return update(name, user_json_or_hash, None, txid=txid, public_key=public_key, tx_only)
 
 def transfer(name, address, keep_data, privatekey, proxy=None, tx_only=False):
     """
