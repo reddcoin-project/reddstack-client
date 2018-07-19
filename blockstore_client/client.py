@@ -33,6 +33,7 @@ import importlib
 import pprint
 import random
 import time
+from copy import copy
 
 import parsing, schemas, storage, drivers, config, spv, utils
 import user as user_db
@@ -56,10 +57,28 @@ default_proxy = None
 # ancillary storage providers
 STORAGE_IMPL = None
 
+class BlockstoreRPCError(Exception):
+    def __init__(self, value):
+        self.value = value
 
-class BlockstoreRPCClient(object):
+    def __str__(self):
+        return repr(self.value)
+
+class BlockstoreRPCBadResponse(BlockstoreRPCError):
+    pass
+
+class BlockstoreRPCRequestFailure(BlockstoreRPCError):
+    pass
+
+class BlockstoreRPCResponseError(BlockstoreRPCError):
+    '''
+    BlockstoreRPCResponseError contains a dictionary with a code and a message
+    '''
+    pass
+
+class BlockstoreRPCClientv2(object):
     """
-    Not-quite-JSONRPC client for Blockstore.
+    Redo of not-quite-JSONRPC client for Blockstore.
 
     Blockstore's not-quite-JSONRPC server expects a raw Netstring that encodes
     a JSON object with a "method" string and an "args" list.  It will ignore
@@ -67,14 +86,17 @@ class BlockstoreRPCClient(object):
     not guarantee that the "result" and "error" keywords will be present.
     """
 
-    def __init__(self, server, port,
+    def __init__(self, server, port, version='2.0',
                  max_rpc_len=MAX_RPC_LEN,
                  timeout=config.DEFAULT_TIMEOUT):
         self.server = server
         self.port = port
-        self.sock = None
+        self.version = version
+        self._id = 1
         self.max_rpc_len = max_rpc_len
         self.timeout = timeout
+        self.socket = None
+        self.connect()
 
     def __getattr__(self, key):
         try:
@@ -82,8 +104,21 @@ class BlockstoreRPCClient(object):
         except AttributeError:
             return self.dispatch(key)
 
-    def socket():
-        return self.sock
+    @property
+    def _rpcid(self):
+        if self._id >= 1000000:
+            self._id = 0
+        self._id += 1
+        return self._id
+
+    def connect(self):
+        if self.socket is None:
+            self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            self.socket.settimeout(self.timeout)
+            self.socket.connect((self.server, self.port))
+
+    def close(self):
+        self.socket.close()
 
     def default(self, *args):
         self.params = args
@@ -93,104 +128,122 @@ class BlockstoreRPCClient(object):
         self.method = key
         return self.default
 
-    def ensure_connected(self):
-        if self.sock is None:
-            self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM, 0)
-            self.sock.settimeout(self.timeout)
-            self.sock.connect((self.server, self.port))
-
-        return True
-
-    def request(self):
-
-        self.ensure_connected()
-        request_id = str(uuid.uuid4())
-        parameters = {
-            'id': request_id,
-            'method': self.method,
-            'params': self.params,
-            'version': '2.0'
+    def _msg(self, method, params):
+        jsonrpc = {
+            'jsonrpc': self.version,
+            'method': method,
+            'params': params
         }
 
-        data = json.dumps(parameters)
-        data_netstring = str(len(data)) + ":" + data + ","
+        rpcid = copy(self._rpcid)
+        jsonrpc['id'] = rpcid
 
-        # send request
+        string = json.dumps(jsonrpc)
+        netstring = str(len(string)) + ':' + string + ','
+
+        return (rpcid, netstring)
+
+    def request(self, retry=1, timeout=2):
+
+        def do_retry(retry):
+            retry -= 1
+            if retry < 0:
+                raise BlockstoreRPCRequestFailure('Retries exceeded.')
+
+            self.close()
+            try:
+                self.connect()
+            except:
+                traceback_string = traceback.format_exc()
+                raise exception(traceback_string)
+            return self.request(self, retry-1)
+
         try:
-            self.sock.sendall(data_netstring)
-        except Exception, e:
-            self.sock.close()
-            self.sock = None
-            raise e
+            self.method, self.params
+            rpcid, netstring = self._msg(self.method, self.params)
 
-        # get response: expect comma-ending netstring
-        # get the length first
-        len_buf = ""
+            self.socket.sendall(netstring)
+        except:
+            # Get the traceback
+            tb_s = traceback.format_exc()
+            log.error(tb_s)
+            return do_retry(retry)
 
-        while True:
-            c = self.sock.recv(1)
-            if len(c) == 0:
-                # connection closed
-                self.sock.close()
-                self.sock = None
-                raise Exception("Server closed remote connection")
+        byte_length = self.socket.recv(1, socket.MSG_WAITALL)
 
-            c = c[0]
+        if not byte_length:
+            raise BlockstoreRPCError('Failed to recieve response.')
 
-            if c == ':':
-                break
-            else:
-                len_buf += c
-                buf_len = 0
+        while byte_length[-1] != ':':
+            c = self.socket.recv(1, socket.MSG_WAITALL)
+            if c not in '0123456789:':
+                raise BlockstoreRPCBadResponse(
+                    'Bad netstring: invalid length field, \'{0}{1}\''
+                    .format(byte_length, c))
+            byte_length += c
 
-                # ensure it's an int
-                try:
-                    buf_len = int(len_buf)
-                except Exception, e:
-                    # invalid
-                    self.sock.close()
-                    self.sock = None
-                    raise Exception("Invalid response: invalid netstring length")
+        byte_length = int(byte_length[:-1])
 
-                # ensure it's not too big
-                if buf_len >= self.max_rpc_len:
-                    self.sock.close()
-                    self.sock = None
-                    raise Exception("Invalid response: message too big")
+        if byte_length >= self.max_rpc_len:
+            self.socket.close()
+            self.socket = None
+            raise BlockstoreRPCBadResponse("Invalid response: message too big")
 
-        # receive message
-        num_received = 0
-        response = ""
+        response_string = ''
+        response_len = 0
+        while response_len < byte_length:
+            remainder = byte_length - response_len
+            response_string += str(self.socket.recv(remainder))
+            response_len = len(response_string)
 
-        while num_received < buf_len+1:
-            buf = self.sock.recv(4096)
-            num_received += len(buf)
-            response += buf
-
-        # ensure that the message is terminated with a comma
-        if response[-1] != ',':
-            self.sock.close()
-            self.sock = None
-            raise Exception("Invalid response: invalid netstring termination")
-
-        # trim ','
-        response = response[:-1]
-
-        # parse the response
         try:
-            result = json.loads(response)
-            # Netstrings responds with [{}] instead of {}
-            #result = result[0]
-            result = result['result'][0]
-            #print("Result back: %s" % json.dumps(result))
-        except Exception, e:
+            response = json.loads(response_string)
+        except:
+            raise BlockstoreRPCBadResponse(
+                'Failed to parse response: {}'.format(response_string))
 
-            # try to clean up
-            self.sock.close()
-            self.sock = None
-            raise Exception("Invalid response: not a JSON string")
+        if 'jsonrpc' not in response:
+            raise BlockstoreRPCBadResponse("Missing 'jsonrpc' version")
 
-        return result
+        if response['jsonrpc'] != self.version:
+            raise BlockstoreRPCBadResponse(
+                'Bad jsonrpc version. Got {actual}, expects {expected}'
+                .format(
+                    actual=response['jsonrpc'],
+                    expected=self.version))
+
+        if 'id' not in response:
+            raise BlockstoreRPCBadResponse("Missing 'id'")
+
+        if response['id'] != rpcid:
+            log.error(
+                'Wrong response id. Got {actual}, expects {expected}.'
+                ' Retrying...'.format(
+                    actual=response['id'],
+                    expected=rpcid))
+            return do_retry(retry)
+
+        last_char = self.socket.recv(1)
+
+        if last_char != ',':
+            raise BlockstoreRPCBadResponse('Bad netstring: missing comma')
+
+        if 'result' in response:
+            return response['result']
+        elif 'error' in response:
+            error = response['error']
+            if 'code' not in error:
+                raise BlockstoreRPCBadResponse(
+                    'error response missing code. Response: {}'
+                    .format(response))
+            elif 'message' not in error:
+                raise BlockstoreRPCBadResponse(
+                    'error response missing message. Response: {}'
+                    .format(response))
+            raise BlockstoreRPCResponseError(response['error'])
+        else:
+            raise BlockstoreRPCBadResponse(
+                'Invalid response: {}'.format(response))
 
 
 def session(conf=None, server_host=BLOCKSTORED_SERVER, server_port=BLOCKSTORED_PORT,
@@ -227,7 +280,7 @@ def session(conf=None, server_host=BLOCKSTORED_SERVER, server_port=BLOCKSTORED_P
         sys.exit(1)
 
     # create proxy
-    proxy = BlockstoreRPCClient(server_host, server_port)
+    proxy = BlockstoreRPCClientv2(server_host, server_port)
 
     if default_proxy is None and set_global:
         default_proxy = proxy
@@ -1912,12 +1965,7 @@ def update_unsigned(name, user_json_or_hash, public_key, txid=None):
     """
     update_unsigned
     """
-    tx_only = False
-
-    if txid == None:
-        tx_only = True
-
-    return update(name, user_json_or_hash, None, txid=txid, public_key=public_key, tx_only=tx_only)
+    return update(name, user_json_or_hash, None, txid=txid, public_key=public_key, tx_only=True)
 
 def transfer(name, address, keep_data, privatekey, proxy=None, tx_only=False):
     """
