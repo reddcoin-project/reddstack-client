@@ -229,7 +229,7 @@ class BlockstoreRPCClientv2(object):
             raise BlockstoreRPCBadResponse('Bad netstring: missing comma')
 
         if 'result' in response:
-            return response['result']
+            return response['result'][0]
         elif 'error' in response:
             error = response['error']
             if 'code' not in error:
