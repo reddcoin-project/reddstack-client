@@ -88,13 +88,15 @@ class BlockstoreRPCClientv2(object):
 
     def __init__(self, server, port, version='2.0',
                  max_rpc_len=MAX_RPC_LEN,
-                 timeout=config.DEFAULT_TIMEOUT):
+                 timeout=config.DEFAULT_TIMEOUT,
+                 retries=2):
         self.server = server
         self.port = port
         self.version = version
         self._id = 1
         self.max_rpc_len = max_rpc_len
         self.timeout = timeout
+        self.retries = retries
         self.socket = None
         self.connect()
 
@@ -119,6 +121,7 @@ class BlockstoreRPCClientv2(object):
 
     def close(self):
         self.socket.close()
+        self.socket = None
 
     def default(self, *args):
         self.params = args
@@ -143,11 +146,12 @@ class BlockstoreRPCClientv2(object):
 
         return (rpcid, netstring)
 
-    def request(self, retry=1, timeout=2):
+    def request(self):
 
-        def do_retry(retry):
-            retry -= 1
-            if retry < 0:
+        def do_retry(self):
+            log.info('do_retry =, {} times '.format(self.retries))
+            self.retries -= 1
+            if self.retries < 0:
                 raise BlockstoreRPCRequestFailure('Retries exceeded.')
 
             self.close()
@@ -156,9 +160,10 @@ class BlockstoreRPCClientv2(object):
             except:
                 traceback_string = traceback.format_exc()
                 raise exception(traceback_string)
-            return self.request(self, retry-1)
+            return self.request(self)
 
         try:
+            self.connect()
             self.method, self.params
             rpcid, netstring = self._msg(self.method, self.params)
 
@@ -167,7 +172,7 @@ class BlockstoreRPCClientv2(object):
             # Get the traceback
             tb_s = traceback.format_exc()
             log.error(tb_s)
-            return do_retry(retry)
+            return do_retry(self.retries-1)
 
         byte_length = self.socket.recv(1, socket.MSG_WAITALL)
 
@@ -180,6 +185,7 @@ class BlockstoreRPCClientv2(object):
                 raise BlockstoreRPCBadResponse(
                     'Bad netstring: invalid length field, \'{0}{1}\''
                     .format(byte_length, c))
+                return do_retry(self.retries-1)
             byte_length += c
 
         byte_length = int(byte_length[:-1])
@@ -229,6 +235,7 @@ class BlockstoreRPCClientv2(object):
             raise BlockstoreRPCBadResponse('Bad netstring: missing comma')
 
         if 'result' in response:
+            self.close()
             return response['result'][0]
         elif 'error' in response:
             error = response['error']
