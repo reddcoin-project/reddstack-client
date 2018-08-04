@@ -65,18 +65,15 @@ class BlockstoreRPCError(Exception):
         return repr(self.value)
 
 class BlockstoreRPCBadResponse(BlockstoreRPCError):
-    log.error(BlockstoreRPCError)
     pass
 
 class BlockstoreRPCRequestFailure(BlockstoreRPCError):
-    log.error(BlockstoreRPCError)
     pass
 
 class BlockstoreRPCResponseError(BlockstoreRPCError):
     '''
     BlockstoreRPCResponseError contains a dictionary with a code and a message
     '''
-    log.error(BlockstoreRPCError)
     pass
 
 class BlockstoreRPCClientv2(object):
