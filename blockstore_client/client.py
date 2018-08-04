@@ -1712,6 +1712,26 @@ def preorder_subsidized(name, public_key, register_addr, subsidy_key, proxy=None
 
     return resp
 
+def preorder_unsigned(name, public_key, register_addr, proxy=None):
+    """
+    preorder a name, but dont sign the transaction.
+    Return an unsigned trransaction, where the client must sign each
+    input originating from register_addr
+    """
+    resp = {}
+
+    if proxy is None:
+        proxy = get_default_proxy()
+
+    try:
+        # get preorder tx
+        resp = proxy.preorder_tx_unsigned(name, public_key, register_addr)
+
+    except Exception as e:
+        resp['error'] = str(e)
+
+    return resp
+
 
 def register(name, privatekey, register_addr, proxy=None, tx_only=False):
     """
@@ -1758,6 +1778,25 @@ def register_subsidized(name, public_key, register_addr, subsidy_key, proxy=None
 
     return resp
 
+def register_unsigned(name, public_key, register_addr, proxy=None):
+    """
+    make a transaction that will register a name, but subsidize it with the given subsidy_key.
+    Return a SIGHASH_ANYONECANPAY transaction, where the client must sign each
+    input originating from register_addr
+    """
+    resp = {}
+
+    if proxy is None:
+        proxy = get_default_proxy()
+
+    try:
+        # get register tx
+        resp = proxy.register_tx_unsigned(name, public_key, register_addr)
+
+    except Exception as e:
+        resp['error'] = str(e)
+
+    return resp
 
 def update(name, user_json_or_hash, privatekey, txid=None, proxy=None, tx_only=False, public_key=None, subsidy_key=None):
     """
@@ -1809,6 +1848,8 @@ def update(name, user_json_or_hash, privatekey, txid=None, proxy=None, tx_only=F
 
         if privatekey is None and public_key is not None and subsidy_key is not None:
             return proxy.update_tx_subsidized(name, user_record_hash, public_key, subsidy_key)
+        elif privatekey is None and public_key is not None and subsidy_key is None:
+            return proxy.update_tx_unsigned(name, user_record_hash, public_key)
 
         else:
             return proxy.update_tx(name, user_record_hash, privatekey)
@@ -1867,6 +1908,16 @@ def update_subsidized(name, user_json_or_hash, public_key, subsidy_key, txid=Non
     """
     return update(name, user_json_or_hash, None, txid=txid, public_key=public_key, subsidy_key=subsidy_key, tx_only=True)
 
+def update_unsigned(name, user_json_or_hash, public_key, txid=None):
+    """
+    update_unsigned
+    """
+    tx_only = False
+
+    if txid == None:
+        tx_only = True
+
+    return update(name, user_json_or_hash, None, txid=txid, public_key=public_key, tx_only=tx_only)
 
 def transfer(name, address, keep_data, privatekey, proxy=None, tx_only=False):
     """
@@ -1892,6 +1943,14 @@ def transfer_subsidized(name, address, keep_data, public_key, subsidy_key, proxy
 
     return proxy.transfer_tx_subsidized(name, address, keep_data, public_key, subsidy_key)
 
+def transfer_unsigned(name, address, keep_data, public_key, proxy=None):
+    """
+    transfer_unsigned
+    """
+    if proxy is None:
+        proxy = get_default_proxy()
+
+    return proxy.transfer_tx_unsigned(name, address, keep_data, public_key)
 
 def renew(name, privatekey, proxy=None, tx_only=False):
     """
@@ -1918,6 +1977,15 @@ def renew_subsidized(name, public_key, subsidy_key, proxy=None):
 
     return proxy.renew_tx_subsidized(name, public_key, subsidy_key)
 
+def renew_unsigned(name, public_key, proxy=None):
+    """
+    renew_unsigned
+    """
+
+    if proxy is None:
+        proxy = get_default_proxy()
+
+    return proxy.renew_tx_unsigned(name, public_key)
 
 def revoke(name, privatekey, proxy=None, tx_only=False):
     """
@@ -1943,6 +2011,14 @@ def revoke_subsidized(name, public_key, subsidy_key, proxy=None):
 
     return proxy.revoke_tx_subsidized(name, public_key, subsidy_key)
 
+def revoke_unsigned(name, public_key, proxy=None):
+    """
+    revoke_unsigned
+    """
+    if proxy is None:
+        proxy = get_default_proxy()
+
+    return proxy.revoke_tx_unsigned(name, public_key)
 
 def send_subsidized(privatekey, subsidized_tx, proxy=None):
     """
