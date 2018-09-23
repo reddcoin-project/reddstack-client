@@ -870,6 +870,7 @@ def run_cli():
               result['last_block_processed'] = resp['blocks']
             result['last_block_seen'] = resp['bitcoind_blocks']
             result['consensus_hash'] = resp['consensus']
+            result['indexing'] = resp['indexing']
 
             if advanced_mode == 'on':
                 result['testset'] = resp['testset']
