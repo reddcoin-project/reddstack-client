@@ -149,7 +149,7 @@ class BlockstoreRPCClientv2(object):
     def request(self, method, params={}, retry=2):
 
         def do_retry(retry):
-            log.info('do_retry =, {} times '.format(retry))
+            log.debug('do_retry =, {} times '.format(retry))
             retry -= 1
             if retry < 0:
                 raise BlockstoreRPCRequestFailure('Retries exceeded.')
@@ -165,10 +165,10 @@ class BlockstoreRPCClientv2(object):
         try:
             self.connect()
             rpcid, netstring = self._msg(self.method, self.params)
-            log.info ("ID: {id} Netstring: {nstr}".format(id=rpcid,nstr=netstring))
+            log.debug ("ID: {id} Netstring: {nstr}".format(id=rpcid,nstr=netstring))
 
             self.socket.sendall(netstring)
-            log.info("ID: {id} Sent".format(id=rpcid))
+            log.debug("ID: {id} Sent".format(id=rpcid))
         except:
             # Get the traceback
             tb_s = traceback.format_exc()
@@ -178,7 +178,7 @@ class BlockstoreRPCClientv2(object):
 
         try:
             byte_length = self.socket.recv(1, socket.MSG_WAITALL)
-            log.info("ID: {id} Received".format(id=rpcid))
+            log.debug("ID: {id} Received".format(id=rpcid))
         except socket.timeout, e:
             err = e.args[0]
             if err == 'timed out':
@@ -198,7 +198,7 @@ class BlockstoreRPCClientv2(object):
                     .format(byte_length, c))
                 return do_retry(self.retry)
             byte_length += c
-        log.info("Length of response = {0}".format(byte_length))
+        log.debug("Length of response = {0}".format(byte_length))
 
         byte_length = int(byte_length[:-1])
 
