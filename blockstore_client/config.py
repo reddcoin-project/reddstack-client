@@ -182,7 +182,6 @@ OPFIELDS = {
     ]
 }
 
-DEBUG = True
 MAX_RPC_LEN = 1024 * 1024 * 1024
 
 CONFIG_DIR = os.path.expanduser("~/.reddstore-client")
