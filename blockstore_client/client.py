@@ -1724,7 +1724,7 @@ def preorder(name, privatekey, register_addr=None, proxy=None, tx_only=False):
     register_privkey_wif = None
 
     if register_addr is None:
-        privkey = pyreddcoin.ReddcoinPrivateKey()
+        privkey = virtualchain.ReddcoinPrivateKey()
         pubkey = privkey.public_key()
 
         register_addr = pubkey.address()
@@ -1734,7 +1734,7 @@ def preorder(name, privatekey, register_addr=None, proxy=None, tx_only=False):
         print register_addr
 
     # make sure the reveal address is *not* the address of this private key
-    privkey = pyreddcoin.ReddcoinPrivateKey(privatekey)
+    privkey = virtualchain.ReddcoinPrivateKey(privatekey)
     if register_addr == privkey.public_key().address():
         return {"error": "Register address derived from private key"}
 
@@ -2122,7 +2122,7 @@ def namespace_preorder(namespace_id, privatekey, reveal_addr=None, proxy=None):
     reveal_privkey_wif = None
 
     if reveal_addr is None:
-        privkey = pyreddcoin.ReddcoinPrivateKey()
+        privkey = virtualchain.ReddcoinPrivateKey()
         pubkey = privkey.public_key()
         reveal_addr = pubkey.address()
 
@@ -2131,7 +2131,7 @@ def namespace_preorder(namespace_id, privatekey, reveal_addr=None, proxy=None):
         print reveal_addr
 
     # make sure the reveal address is *not* the address of this private key
-    privkey = pyreddcoin.ReddcoinPrivateKey(privatekey)
+    privkey = virtualchain.ReddcoinPrivateKey(privatekey)
     if reveal_addr == privkey.public_key().address():
         return {"error": "Reveal address derived from private key"}
 
