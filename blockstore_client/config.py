@@ -30,7 +30,7 @@ from ConfigParser import SafeConfigParser
 
 from .version import __version__
 
-DEBUG = True
+DEBUG = False
 VERSION = __version__
 
 DEFAULT_BLOCKSTORED_PORT = '6264'
